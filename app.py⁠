@@ -1,0 +1,51 @@
+import pandas as pd
+import streamlit as st
+
+st.set_page_config(
+    page_title="Hệ Thống Quản Lý Hàng Hóa", page_icon="📦", layout="wide"
+)
+
+st.title("📦 Quản Lý Kho & Đơn Hàng Tự Động")
+
+try:
+    df = pd.read_csv("data.csv")
+    df["thanh_tien"] = df["don_gia"] * df["so_luong"]
+
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Tổng số loại sản phẩm", f"{len(df)} món")
+    col2.metric("Tổng số lượng tồn/nhập", f"{df['so_luong'].sum():,} cái/gói")
+    col3.metric("Tổng giá trị hàng hóa", f"{df['thanh_tien'].sum():,} VNĐ")
+
+    st.divider()
+
+    search = st.text_input("🔍 Tìm kiếm sản phẩm theo tên:")
+    if search:
+        df_show = df[df["ten_san_pham"].str.contains(search, case=False)]
+    else:
+        df_show = df
+
+    df_display = df_show.rename(
+        columns={
+            "stt": "STT",
+            "ten_san_pham": "Tên sản phẩm",
+            "don_gia": "Đơn giá (VNĐ)",
+            "so_luong": "Số lượng",
+            "thanh_tien": "Thành tiền (VNĐ)",
+        }
+    )
+
+    st.dataframe(df_display, use_container_width=True, hide_index=True)
+
+    csv_data = df.to_csv(index=False).encode("utf-8-sig")
+    st.download_button(
+        label="📥 Tải toàn bộ danh sách (File CSV/Excel)",
+        data=csv_data,
+        file_name="danh_sach_hang_hoa.csv",
+        mime="text/csv",
+    )
+
+except Exception as e:
+    st.error(
+        "Chưa tìm thấy file data.csv! Vui lòng tải file data.csv lên cùng thư"
+        " mục."
+    )
